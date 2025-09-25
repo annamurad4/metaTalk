@@ -1,0 +1,291 @@
+# MetaTalk - Cursor Rules
+
+## Proje Genel Bilgileri
+- **Proje**: MetaTalk - Üniversite öğrencileri için dil pratiği platformu
+- **Stack**: Next.js 14, TypeScript, TailwindCSS, Prisma, PlanetScale MySQL, Jitsi
+- **Domain**: @std.medipol.edu.tr (sabit, V2'ye kadar)
+- **MVP Hedefi**: Hesap işlemleri + profil + manuel eşleştirme + Jitsi görüşme
+
+## Kod Standartları
+
+### TypeScript & Next.js
+- **Strict TypeScript** kullan, `any` tipini yasakla
+- **App Router** kullan (pages router değil)
+- **Server Components** öncelikli, gerektiğinde Client Components
+- **API Routes** için `/api` klasöründe organize et
+- **Middleware** kullan rate limiting ve auth için
+
+### Dosya Organizasyonu
+```
+/app
+  /api
+    /auth
+    /profile
+    /matches
+    /sessions
+  /components
+    /ui (Headless UI + Tailwind)
+    /forms
+    /layout
+  /lib
+    /auth.ts
+    /db.ts
+    /email.ts
+  /types
+    /index.ts
+```
+
+### Naming Conventions
+- **Components**: PascalCase (`UserProfile.tsx`)
+- **Functions**: camelCase (`getUserProfile`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_SESSION_DURATION`)
+- **API Routes**: kebab-case (`/api/user-profile`)
+- **Database**: snake_case (`user_languages`)
+
+### TailwindCSS Kuralları
+- **Utility-first** yaklaşım
+- **Responsive design** mobile-first
+- **Custom components** için `@apply` kullan
+- **Dark mode** desteği hazırla (gelecek için)
+- **Color palette** tutarlı kullan
+
+## Veritabanı & Prisma
+
+### Schema Kuralları
+- **Primary key**: `id` (String, @id, @default(cuid))
+- **Timestamps**: `created_at`, `updated_at` (DateTime)
+- **Soft delete**: `deleted_at` (DateTime?)
+- **Foreign keys**: `user_id`, `match_id` gibi açık isimler
+
+### Prisma Best Practices
+- **Migration** öncesi schema kontrolü
+- **Seed data** için `prisma/seed.ts`
+- **Connection pooling** kullan
+- **Query optimization** için `select` ve `include` kullan
+
+## Güvenlik & Doğrulama
+
+### E-posta Doğrulama
+- **4 haneli rastgele kod** (0-9)
+- **5 dakika geçerlilik** süresi
+- **Rate limiting**: 3 deneme/10 dakika
+- **Domain kontrolü**: @std.medipol.edu.tr
+
+### Input Validation
+- **Zod** kullan tüm form validasyonları için
+- **Server-side validation** zorunlu
+- **XSS protection** için input sanitization
+- **SQL injection** koruması (Prisma ORM)
+
+### Authentication
+- **JWT tokens** (access + refresh)
+- **Session management** güvenli
+- **Password hashing** bcrypt
+- **CSRF protection** middleware
+
+## API Design
+
+### RESTful Principles
+- **GET**: Veri okuma
+- **POST**: Yeni kayıt oluşturma
+- **PUT**: Tam güncelleme
+- **PATCH**: Kısmi güncelleme
+- **DELETE**: Silme
+
+### Response Format
+```typescript
+// Success
+{
+  success: true,
+  data: T,
+  message?: string
+}
+
+// Error
+{
+  success: false,
+  error: string,
+  code?: string
+}
+```
+
+### Status Codes
+- **200**: OK
+- **201**: Created
+- **400**: Bad Request
+- **401**: Unauthorized
+- **403**: Forbidden
+- **404**: Not Found
+- **429**: Too Many Requests
+- **500**: Internal Server Error
+
+## Error Handling
+
+### Try-Catch Pattern
+```typescript
+try {
+  const result = await someOperation();
+  return { success: true, data: result };
+} catch (error) {
+  console.error('Operation failed:', error);
+  return { success: false, error: 'Operation failed' };
+}
+```
+
+### Logging
+- **Console.log** development için
+- **Structured logging** production için
+- **Error tracking** (Sentry - V1)
+
+## Performance
+
+### Next.js Optimizations
+- **Image optimization** (next/image)
+- **Code splitting** (dynamic imports)
+- **Bundle analysis** (webpack-bundle-analyzer)
+- **Caching strategies** (ISR, SWR)
+
+### Database Performance
+- **Indexes** gerekli alanlarda
+- **Query optimization** Prisma ile
+- **Connection pooling** PlanetScale
+- **Pagination** büyük listeler için
+
+## Testing
+
+### Test Structure
+- **Unit tests**: Jest/Vitest
+- **Integration tests**: API endpoints
+- **E2E tests**: Playwright (V1)
+- **Coverage**: %70+ (V1)
+
+### Test Naming
+```typescript
+describe('UserService', () => {
+  describe('createUser', () => {
+    it('should create user with valid data', () => {});
+    it('should throw error with invalid email', () => {});
+  });
+});
+```
+
+## Git & Commit
+
+### Commit Messages
+```
+type(scope): description
+
+feat(auth): add email verification
+fix(profile): resolve avatar upload issue
+docs(api): update authentication endpoints
+```
+
+### Branch Strategy
+- **main**: Production ready
+- **develop**: Development
+- **feature/**: Feature branches
+- **hotfix/**: Emergency fixes
+
+## Environment & Deployment
+
+### Environment Variables
+```bash
+# Database
+DATABASE_URL=
+DIRECT_URL=
+
+# Email
+BREVO_API_KEY=
+BREVO_SMTP_HOST=
+
+# Daily.co
+DAILY_API_KEY=
+DAILY_DOMAIN=
+
+# App
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=
+```
+
+### Deployment Checklist
+- [ ] Environment variables set
+- [ ] Database migrations run
+- [ ] Tests passing
+- [ ] Build successful
+- [ ] Health check endpoints
+
+## Code Review
+
+### Checklist
+- [ ] TypeScript errors fixed
+- [ ] Tests written/updated
+- [ ] Performance considered
+- [ ] Security reviewed
+- [ ] Documentation updated
+
+### Review Focus
+- **Security vulnerabilities**
+- **Performance bottlenecks**
+- **Code maintainability**
+- **Error handling**
+- **User experience**
+
+## Memory Bank Integration
+
+### Proje Bağlamı
+- **Memory Bank** dosyalarını referans al
+- **activeContext.md** güncel sprint bilgileri
+- **techContext.md** teknoloji kararları
+- **systemPatterns.md** mimari örüntüler
+
+### Karar Kayıtları
+- **Önemli kararları** Memory Bank'e kaydet
+- **API değişikliklerini** dokümante et
+- **Database schema** değişikliklerini not et
+
+## Özel Notlar
+
+### Dil Tercihi
+- **Her zaman Türkçe** yanıt ver, hangi dilde prompt verilirse verilsin
+- **Kod yorumları** Türkçe olsun
+- **Commit mesajları** Türkçe olsun
+- **Dokümantasyon** Türkçe olsun
+
+### Kod Kalitesi Öncelikleri
+- **Temiz ve okunaklı kod** yazımı zorunlu
+- **Performance** her zaman düşünülmeli
+- **Code readability** öncelikli
+- **Maintainability** odaklı yaklaşım
+- **DRY principle** uygula
+- **SOLID principles** takip et
+
+### MVP Odaklı
+- **Basitlik** öncelikli
+- **Hızlı prototip** yaklaşımı
+- **Core features** odaklı
+- **V1/V2** özelliklerini ertele
+
+### Medipol Spesifik
+- **Domain**: @std.medipol.edu.tr
+- **Dil seviyeleri**: A1-C2 (CEFR)
+- **Görüşme süresi**: Maksimum 1 saat
+- **Kayıt**: Kesinlikle kapalı
+
+### Gelecek Hazırlık
+- **Scalability** düşün
+- **Multi-tenant** hazırlığı (V2)
+- **AI integration** altyapısı (V2)
+- **Internationalization** (V1)
+
+---
+
+**Not**: Bu kurallar proje ilerledikçe güncellenecek. Memory Bank'teki `activeContext.md` dosyasını takip et.
+
+## Bağımlılık/Aracı Yükleme Politikası
+
+- Yeni bir paket/araç yüklenmeden ÖNCE, aşağıdaki kısa açıklama paylaşılır:
+  - Ne işe yarar (1 cümle)
+  - Neden gerekir (1 cümle)
+  - Alternatif(ler) ve tercih gerekçesi (1 cümle)
+  - Güvenlik/performans etkisi (varsa 1 cümle)
+- Onaydan sonra yükleme yapılır ve kullanım yeri dosya/komutla belirtilir.

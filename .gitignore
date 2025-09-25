@@ -1,0 +1,32 @@
+# Dependencies
+node_modules
+
+# Next.js
+.next
+out
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Env files
+.env
+.env.*
+!.env.local.example
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Builds / Dist
+coverage
+build
+.dist
+
+# Prisma
+prisma/*.db
+prisma/migrations/

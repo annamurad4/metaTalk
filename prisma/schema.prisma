@@ -1,0 +1,177 @@
+// Prisma şeması (MVP) - SQLite lokal geliştirme için
+// Üretimde PlanetScale MySQL'e taşınacak
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum CEFRLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  email_verified    Boolean   @default(false)
+  name              String?
+  surname           String?
+  department        String?
+  class_year        Int?
+  avatar_url        String?
+  password_hash     String?
+  password_set_at   DateTime?
+  total_sessions    Int       @default(0)
+  languages_learned Int       @default(0)
+  languages_taught  Int       @default(0)
+  average_rating    Float     @default(4.8)
+  
+  // Kredi sistemi
+  credits          Int       @default(10)    // Tek tip kredi sistemi
+  
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
+
+  // İlişkiler
+  user_languages      UserLanguage[]
+  user_availability   UserAvailability[]
+  sessions            UserSession[]
+  
+  // Eşleştirme ilişkileri
+  learner_suggestions MatchingSuggestion[] @relation("LearnerSuggestions")
+  teacher_suggestions MatchingSuggestion[] @relation("TeacherSuggestions")
+  
+  // Chat ve görüşme ilişkileri
+  sent_messages       ChatMessage[]        @relation("SentMessages")
+  received_messages   ChatMessage[]        @relation("ReceivedMessages")
+  learner_sessions    Session[]            @relation("LearnerSessions")
+  teacher_sessions    Session[]            @relation("TeacherSessions")
+}
+
+model Language {
+  id   String @id @default(cuid())
+  code String @unique // ISO-639-1
+  name String
+
+  user_languages UserLanguage[]
+  match_suggestions MatchingSuggestion[]
+  sessions Session[]
+}
+
+model UserLanguage {
+  id          String    @id @default(cuid())
+  user_id     String
+  language_id String
+  role        String // "learn" | "teach"
+  level       CEFRLevel
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+
+  user     User     @relation(fields: [user_id], references: [id])
+  language Language @relation(fields: [language_id], references: [id])
+
+  @@unique([user_id, language_id, role])
+  @@index([language_id, role, level]) // Eşleştirme performansı için indeks
+}
+
+model UserAvailability {
+  id         String   @id @default(cuid())
+  user_id    String
+  day        Int // 1 = Pazartesi, 7 = Pazar
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, day])
+  @@index([user_id, day]) // Ortak gün hesaplama performansı için indeks
+}
+
+/// Eşleştirme önerilerinin önbellek tablosu
+model MatchingSuggestion {
+  id              String   @id @default(cuid())
+  learner_id      String
+  teacher_id      String
+  language_id     String
+  common_days     String   // JSON olarak kaydedilmiş ortak günler [1,3,5]
+  common_day_count Int     @default(0)
+  match_score     Float    // Hesaplanan eşleştirme puanı
+  is_mutual       Boolean  @default(false) // Karşılıklı fayda var mı?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now()) @updatedAt
+
+  // İlişkiler
+  learner  User     @relation("LearnerSuggestions", fields: [learner_id], references: [id])
+  teacher  User     @relation("TeacherSuggestions", fields: [teacher_id], references: [id])
+  language Language @relation(fields: [language_id], references: [id])
+
+  @@unique([learner_id, teacher_id, language_id])
+  @@index([learner_id, match_score]) // Öğrenen kullanıcı için eşleşme listesi performansı
+  @@index([teacher_id, match_score]) // Öğreten kullanıcı için eşleşme listesi performansı
+}
+
+/// Kullanıcı oturumları ve refresh token yönetimi
+model UserSession {
+  id         String    @id @default(cuid())
+  user_id    String
+  token_hash String    @unique
+  user_agent String?
+  ip_address String?
+  created_at DateTime  @default(now())
+  expires_at DateTime
+  revoked_at DateTime?
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+}
+
+/// Chat mesajları modeli
+model ChatMessage {
+  id           String   @id @default(cuid())
+  content      String
+  sender_id    String
+  receiver_id  String
+  session_id   String?
+  read         Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
+
+  sender       User     @relation("SentMessages", fields: [sender_id], references: [id])
+  receiver     User     @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+  session      Session? @relation(fields: [session_id], references: [id])
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([session_id])
+}
+
+/// Görüşme oturumları modeli
+model Session {
+  id           String   @id @default(cuid())
+  learner_id   String
+  teacher_id   String
+  language_id  String
+  scheduled_at DateTime?
+  status       String   @default("pending") // pending, scheduled, completed, cancelled
+  daily_room_url String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
+
+  learner      User     @relation("LearnerSessions", fields: [learner_id], references: [id])
+  teacher      User     @relation("TeacherSessions", fields: [teacher_id], references: [id])
+  language     Language @relation(fields: [language_id], references: [id])
+  messages     ChatMessage[]
+
+  @@index([learner_id])
+  @@index([teacher_id])
+}
