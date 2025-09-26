@@ -1,20 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import ChatContainer from '@/components/chat/ChatContainer';
 import ChatFallback from '@/components/chat/ChatFallback';
 import { Skeleton } from '@/components/ui';
 import { ArrowLeft } from 'lucide-react';
 
-interface ChatPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function ChatPage({ params }: ChatPageProps) {
+export default function ChatPage() {
   const router = useRouter();
+  const routeParams = useParams<{ id: string }>();
+  const routeId = routeParams?.id;
   const [userId, setUserId] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,17 +19,17 @@ export default function ChatPage({ params }: ChatPageProps) {
   // URL parametresini kontrol et
   useEffect(() => {
     // Eğer ID parametresi boş veya 'undefined' ise geri yönlendir
-    if (!params.id || params.id === 'undefined') {
+    if (!routeId || routeId === 'undefined') {
       router.push('/matching/results?type=learn');
       return;
     }
     
     // Test kullanıcısı için özel kontrol
-    if (params.id === '' || params.id.length < 5) {
+    if (routeId === '' || routeId.length < 5) {
       router.push('/matching/results?type=learn');
       return;
     }
-  }, [params.id, router]);
+  }, [routeId, router]);
 
   // Kullanıcı bilgilerini ve token'ı al
   useEffect(() => {
@@ -137,7 +133,7 @@ export default function ChatPage({ params }: ChatPageProps) {
         <ChatContainer
           token={token}
           userId={userId}
-          receiverId={params.id}
+          receiverId={routeId}
           showSchedule={true}
           showVideoCall={true}
         />
