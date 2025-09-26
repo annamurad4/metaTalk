@@ -2,7 +2,7 @@
  * Socket.io API endpoint
  * WebSocket bağlantıları için API rotası
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { Server as SocketIOServer } from 'socket.io';
 import { verifyAccessToken } from '@/lib/jwt';
 import { prisma } from '@/lib/db';
@@ -11,7 +11,7 @@ import { prisma } from '@/lib/db';
 let io: SocketIOServer;
 
 // CORS yapılandırması
-export const corsHeaders = {
+const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -23,7 +23,7 @@ export async function OPTIONS() {
 }
 
 // WebSocket bağlantısı için GET isteği
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   try {
     // Soket sunucusu zaten başlatılmışsa, mevcut sunucuyu kullan
     if (io) {
