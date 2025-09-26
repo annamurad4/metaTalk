@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // JWT doğrulama
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('access_token')?.value;
 
     if (!token) {
