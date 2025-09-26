@@ -2,7 +2,7 @@
  * Belirli bir oturum için API endpoint'leri
  * Tekil oturum işlemleri için API rotaları
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
@@ -39,7 +39,7 @@ async function getUserId() {
  * Belirli bir oturumu getir
  */
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -121,7 +121,7 @@ export async function GET(
  * Oturumu güncelle
  */
 export async function PATCH(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -242,7 +242,7 @@ export async function PATCH(
  * Oturumu iptal et
  */
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
