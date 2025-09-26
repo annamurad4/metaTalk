@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { verifyAccessToken } from '@/lib/jwt';
@@ -10,10 +10,10 @@ async function getUserId() {
 }
 
 export async function DELETE(
-	request: NextRequest,
-	context: { params: { id: string } }
+    request: Request,
+    context: { params: Promise<{ id: string }> }
 ) {
-	const { params } = context;
+    const params = await context.params;
 	const userId = await getUserId();
 	if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	
