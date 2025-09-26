@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ 
         success: false, 
         error: 'Geçersiz veri', 
-        details: parsed.error.errors 
+        details: parsed.error.issues 
       }, { status: 400 });
     }
 
