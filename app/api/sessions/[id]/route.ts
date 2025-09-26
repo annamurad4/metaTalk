@@ -40,7 +40,7 @@ async function getUserId() {
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getUserId();
@@ -48,7 +48,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Yetkilendirme hatası' }, { status: 401 });
     }
     
-    const sessionId = params.id;
+    const sessionId = (await params).id;
     
     // Oturumu getir
     const session = await prisma.session.findUnique({
@@ -122,7 +122,7 @@ export async function GET(
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getUserId();
@@ -130,7 +130,7 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: 'Yetkilendirme hatası' }, { status: 401 });
     }
     
-    const sessionId = params.id;
+    const sessionId = (await params).id;
     
     // Oturumu kontrol et
     const existingSession = await prisma.session.findUnique({
@@ -243,7 +243,7 @@ export async function PATCH(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await getUserId();
@@ -251,7 +251,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Yetkilendirme hatası' }, { status: 401 });
     }
     
-    const sessionId = params.id;
+    const sessionId = (await params).id;
     
     // Oturumu kontrol et
     const existingSession = await prisma.session.findUnique({
