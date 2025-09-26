@@ -45,45 +45,13 @@ export default function LoginPage() {
     fetchCsrfToken()
   }, [])
 
-  const handleSubmit = async (data: { email: string; rememberMe?: boolean }) => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      // AuthForm içindeki Zod transform tam e-postayı zaten oluşturuyor
-      const email = data.email
-
-      const response = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': csrf,
-        },
-        body: JSON.stringify({ email, mode: 'login', rememberMe: data.rememberMe ?? true }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        try { localStorage.setItem('rememberMe', String(data.rememberMe ?? true)) } catch {}
-        router.push(`${ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}&rememberMe=${encodeURIComponent(String(data.rememberMe ?? true))}`)
-      } else {
-        setError(result.error || 'Bir hata oluştu')
-      }
-    } catch (error) {
-      setError('Bağlantı hatası')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+  // Şifre ile giriş işlemi
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
     try {
       // Kullanıcı adına domain ekleyerek tam e-posta adresini oluşturuyoruz
-      // Email formatını düzgünce hazırla
       const email = pwEmail.includes('@') ? pwEmail : `${pwEmail}@std.medipol.edu.tr`;
       
       console.log('Login attempt:', { email, rememberMe: pwRemember });
@@ -114,6 +82,50 @@ export default function LoginPage() {
           setError(data.details.map((d: { message: string }) => d.message).join(', '))
         } else {
           setError(data.error || 'Giriş başarısız')
+        }
+      }
+    } catch (err) {
+      setError('Bağlantı hatası')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Kod ile giriş için AuthForm submit handler
+  const handleSubmit = async (data: { email: string; rememberMe: boolean }) => {
+    setIsLoading(true)
+    setError('')
+    
+    try {
+      console.log('Login attempt:', { email: data.email, rememberMe: data.rememberMe });
+      
+      const res = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'x-csrf-token': csrf 
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          email: data.email,
+          mode: 'login',
+          rememberMe: data.rememberMe 
+        })
+      })
+      const result = await res.json()
+      console.log('Login response:', result);
+      
+      if (result.success) {
+        try { localStorage.setItem('rememberMe', String(data.rememberMe)) } catch {}
+        router.push(
+          `${ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(data.email)}&rememberMe=${encodeURIComponent(String(data.rememberMe))}`
+        )
+      } else {
+        // Daha detaylı hata mesajı göster
+        if (result.details && Array.isArray(result.details)) {
+          setError(result.details.map((d: { message: string }) => d.message).join(', '))
+        } else {
+          setError(result.error || 'Giriş başarısız')
         }
       }
     } catch (err) {
@@ -173,6 +185,7 @@ export default function LoginPage() {
                           setPwEmail(value.replace(/\s+/g, ''));
                         }}
                         disabled={isLoading}
+                        helperText="Sadece kullanıcı adınızı yazın, @ işareti eklemeyin"
                       />
                       <Input
                         type={showPassword ? "text" : "password"}
@@ -202,9 +215,39 @@ export default function LoginPage() {
                         />
                         Beni hatırla
                       </label>
+
+                      {/* Hata mesajı gösterimi - iyileştirilmiş */}
+                      {error && (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-red-800">{error}</p>
+                              {/* Kullanıcıya yardımcı ipuçları */}
+                              {error.includes('E-posta veya parola hatalı') && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  Kullanıcı adınızı ve parolanızı kontrol edin. Kullanıcı adında nokta ve tire kullanabilirsiniz.
+                                </p>
+                              )}
+                              {error.includes('Geçersiz veri') && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  Girdiğiniz bilgileri kontrol edin.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <button type="button" className="text-sm text-primary-600 hover:text-primary-700">Şifremi unuttum</button>
-                        <Button type="submit" variant="gradient" loading={isLoading} disabled={isLoading}>Giriş Yap</Button>
+                        <Button type="submit" variant="gradient" loading={isLoading} disabled={isLoading || !pwEmail || !pwPassword}>
+                          Giriş Yap
+                        </Button>
                       </div>
                     </form>
                   </TabsContent>
@@ -219,6 +262,7 @@ export default function LoginPage() {
                       />
                     </Suspense>
                   </TabsContent>
+
                 </Tabs>
                 <div className="mt-6 text-center text-gray-600">
                   Hesabınız yok mu?{' '}
@@ -232,6 +276,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
-
-

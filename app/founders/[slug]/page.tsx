@@ -78,11 +78,11 @@ const foundersData = {
   },
   'elmira-muratova': {
     name: "Elmira Muratova",
-    email: "elmira.muratova@std.medipol.edu.tr",
+    email: "muratowailmira492@gmail.com",
     instagram: "elmira_muratova4",
     linkedin: "https://www.linkedin.com/in/elmira-muratova-176863292?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app",
     role: "Kurucu",
-    image: "/images/founders/placeholder.jpg",
+    image: "/images/founders/elmira.jpg",
     contributions: [
       {
         icon: <Zap className="h-6 w-6 text-yellow-500" />,

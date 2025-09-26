@@ -65,7 +65,12 @@ export default function RegisterPage() {
           `${ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(data.firstName)}&lastName=${encodeURIComponent(data.lastName)}&rememberMe=${encodeURIComponent(String(data.rememberMe ?? true))}`
         )
       } else {
-        setError(result.error || 'Bir hata oluştu')
+        // Daha detaylı hata mesajı göster
+        if (result.details && Array.isArray(result.details)) {
+          setError(result.details.map((d: { message: string }) => d.message).join(', '))
+        } else {
+          setError(result.error || 'Bir hata oluştu')
+        }
       }
     } catch (error) {
       setError('Bağlantı hatası')

@@ -33,6 +33,7 @@ export async function GET() {
 					language: true,
 				},
 			},
+			user_availability: true, // Müsait günleri de dahil et
 		},
 	});
 
@@ -67,15 +68,16 @@ export async function GET() {
 		class_year: user.class_year,
 		avatar_url: user.avatar_url,
 		password_set: !!user.password_hash,
+		credits: user.credits, // Kredi bilgisini ekledik
 		created_at: user.created_at,
 		updated_at: user.updated_at,
 		languages,
+		available_days: user.user_availability.map(ua => ua.day), // Müsait günleri ekledik
 		stats: {
 			total_sessions: user.total_sessions,
 			rating: user.average_rating,
 			languages_learned: activeLanguagesLearned,
 			languages_taught: activeLanguagesTaught,
-			active_days: activeDays,
 		}
 	};
 	

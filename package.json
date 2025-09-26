@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "private": true,
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -39,6 +42,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
     "cmdk": "^1.1.1",
     "critters": "^0.0.23",
     "date-fns": "^4.1.0",
@@ -47,6 +51,7 @@
     "input-otp": "^1.4.2",
     "jose": "^6.1.0",
     "next": "^15.5.2",
+    "next-cloudinary": "^6.16.0",
     "prisma": "^6.15.0",
     "react": "^19.1.1",
     "react-content-loader": "^7.1.1",

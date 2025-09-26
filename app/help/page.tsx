@@ -306,7 +306,7 @@ export default function HelpPage() {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">Medet</h3>
-                      <p className="text-gray-600">Teknik Destek</p>
+                      <p className="text-gray-600">Teknik Ekip Lideri</p>
                     </div>
                   </div>
                   <div className="space-y-3">

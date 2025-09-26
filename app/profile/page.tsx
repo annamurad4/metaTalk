@@ -15,16 +15,25 @@ import {
   TabsList, 
   TabsTrigger, 
   TabsContent,
+  Input,
   Separator,
-  Progress,
-  Modal
+  Modal,
+  ModalContent,
+  ModalHeader, 
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui'
 import { 
   ArrowLeft, 
   Settings, 
   Bell, 
-  Shield, 
-  Globe, 
+  Search,
   Star, 
   MessageCircle, 
   Calendar,
@@ -33,21 +42,25 @@ import {
   BookOpen,
   Languages,
   GraduationCap,
-  Mail,
-  Phone,
-  MapPin,
   Edit3,
   Save,
   X,
   User,
   Plus,
   Trash2,
+  Coins,
+  Target,
+  TrendingUp,
   Clock,
-  Search
+  Globe,
+  Shield,
+  Heart,
+  Camera,
+  Upload
 } from 'lucide-react'
 import Link from 'next/link'
-import { use } from 'react'
-import AvailableDays from '../components/AvailableDays'
+import AvailableDays from '@/components/AvailableDays'
+import AvatarUpload from '@/components/AvatarUpload'
 
 interface Language {
   id: string
@@ -63,125 +76,168 @@ interface UserStats {
   rating: number
   languages_learned: number
   languages_taught: number
-  active_days: number
 }
 
 interface User {
+  id: string
   email: string
-  name: string
-  surname: string
-  department: string
-  class_year: number
-  avatar_url: string
-  password_set?: boolean
+  name: string | null
+  surname: string | null
+  department: string | null
+  class_year: number | null
+  avatar_url: string | null
+  password_set: boolean
+  credits: number
   created_at: string
+  updated_at: string
   languages: Language[]
+  available_days: number[]
   stats: UserStats
 }
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState<User>({
-    email: '',
-    name: '',
-    surname: '',
-    department: '',
-    class_year: 0,
-    avatar_url: '',
-    created_at: '',
-    languages: [],
-    stats: {
-      total_sessions: 0,
-      rating: 0,
-      languages_learned: 0,
-      languages_taught: 0,
-      active_days: 0
-    }
-  })
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [isEditing, setIsEditing] = useState(false)
-  const [isUpdating, setIsUpdating] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
     surname: '',
     department: '',
-    class_year: '',
+    class_year: ''
   })
   
-  // Dil yönetimi için state'ler
-  const [availableLanguages, setAvailableLanguages] = useState<any[]>([])
-  const [selectedLanguage, setSelectedLanguage] = useState('')
-  const [selectedLevel, setSelectedLevel] = useState('A1')
-  const [selectedRole, setSelectedRole] = useState('learn')
+  // Language management states
+  const [showAddLanguage, setShowAddLanguage] = useState(false)
+  const [availableLanguages, setAvailableLanguages] = useState<{code: string, name: string}[]>([])
+  const [newLanguage, setNewLanguage] = useState({
+    code: '',
+    level: 'A1' as 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2',
+    role: 'learn' as 'learn' | 'teach'
+  })
   const [isAddingLanguage, setIsAddingLanguage] = useState(false)
   
-  // Form değişiklik işleyicisi
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setEditForm({
-      ...editForm,
-      [name]: value
-    })
-  }
-  
-  // Profil güncelleme işlemi
-  const handleProfileUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsUpdating(true)
-    
+  useEffect(() => {
+    fetchProfile()
+    fetchAvailableLanguages()
+  }, [])
+
+  const fetchAvailableLanguages = async () => {
     try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setUser({ ...user, ...data.data })
-        setIsEditing(false)
-      } else {
-        console.error('Profil güncellenemedi')
+      const response = await fetch('/api/languages')
+      const data = await response.json()
+      if (data.success) {
+        setAvailableLanguages(data.data)
       }
     } catch (error) {
-      console.error('Güncelleme hatası:', error)
+      console.error('Diller yüklenirken hata:', error)
+    }
+  }
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('/api/profile')
+      const data = await response.json()
+      
+      if (data.success && data.user) {
+        setUser(data.user)
+      } else {
+        router.push('/auth/login')
+      }
+    } catch (error) {
+      console.error('Profil yüklenirken hata:', error)
+      router.push('/auth/login')
     } finally {
-      setIsUpdating(false)
+      setLoading(false)
+    }
+  }
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+  
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const updateData = {
+        name: editForm.name,
+        surname: editForm.surname,
+        department: editForm.department,
+        class_year: editForm.class_year ? parseInt(editForm.class_year) : null
+      }
+
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      if (response.ok) {
+        setIsEditing(false)
+        fetchProfile() // Profili yeniden yükle
+      }
+    } catch (error) {
+      console.error('Profil güncellenirken hata:', error)
     }
   }
   
-  // Dil ekleme işlemi
-  const handleAddLanguage = async () => {
-    if (!selectedLanguage) return
+  // Avatar güncellemesi
+  const handleAvatarUpdate = (url: string) => {
+    if (user) {
+      // UI'ı hemen güncelle
+      setUser({
+        ...user,
+        avatar_url: url
+      });
+    }
+  }
+
+  const handleAddLanguage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newLanguage.code) return
     
     setIsAddingLanguage(true)
     try {
+      // Mevcut dilleri al ve yeni dili ekle
+      const currentLanguages = user?.languages || []
+      const existingLanguages = currentLanguages.filter(lang => lang.role === newLanguage.role)
+      
+      const updatedLanguages = [
+        ...existingLanguages.map(lang => ({ code: lang.code, level: lang.level })),
+        { code: newLanguage.code, level: newLanguage.level }
+      ]
+
       const response = await fetch('/api/user-languages', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          role: selectedRole,
-          items: [{ code: selectedLanguage, level: selectedLevel }]
+          role: newLanguage.role,
+          items: updatedLanguages
         })
       })
       
       if (response.ok) {
-        // Profil verilerini yeniden yükle
-        await fetchProfileData()
-        // Formu temizle
-        setSelectedLanguage('')
-        setSelectedLevel('A1')
-        setSelectedRole('learn')
+        setShowAddLanguage(false)
+        setNewLanguage({ code: '', level: 'A1', role: 'learn' })
+        fetchProfile() // Profili yeniden yükle
       }
     } catch (error) {
-      console.error('Dil ekleme hatası:', error)
+      console.error('Dil eklenirken hata:', error)
     } finally {
       setIsAddingLanguage(false)
     }
   }
   
-  // Dil silme işlemi
   const handleRemoveLanguage = async (languageId: string) => {
     try {
       const response = await fetch(`/api/user-languages/${languageId}`, {
@@ -189,142 +245,26 @@ export default function ProfilePage() {
       })
       
       if (response.ok) {
-        await fetchProfileData()
+        fetchProfile() // Profili yeniden yükle
       }
     } catch (error) {
-      console.error('Dil silme hatası:', error)
+      console.error('Dil kaldırılırken hata:', error)
     }
   }
-  
-  // Profil verilerini çekme fonksiyonu
-  const fetchProfileData = async () => {
-    try {
-      const response = await fetch('/api/profile', { 
-        credentials: 'include',
-        // Cache'i devre dışı bırak, her zaman yeni verileri çekelim
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.user) {
-          setUser(data.user)
-          setEditForm({
-            name: data.user.name || '',
-            surname: data.user.surname || '',
-            department: data.user.department || '',
-            class_year: data.user.class_year?.toString() || '',
-          })
-        }
-      } else if (response.status === 401) {
-        // Access yoksa refresh dene ve tekrar dene
-        const rf = await fetch('/api/auth/refresh', { 
-          method: 'POST', 
-          credentials: 'include',
-          cache: 'no-store'
-        })
-        if (rf.ok) {
-          const r2 = await fetch('/api/profile', { 
-            credentials: 'include',
-            cache: 'no-store',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0',
-            }
-          })
-          if (r2.ok) {
-            const data2 = await r2.json()
-            if (data2.user) {
-              setUser(data2.user)
-              setEditForm({
-                name: data2.user.name || '',
-                surname: data2.user.surname || '',
-                department: data2.user.department || '',
-                class_year: data2.user.class_year?.toString() || '',
-              })
-            }
-          } else {
-            console.error('Profil verilerini yüklemede hata:', r2.status)
-            window.location.href = '/auth/login'
-          }
-        } else {
-          console.error('Refresh işleminde hata:', rf.status)
-          window.location.href = '/auth/login'
-        }
-      }
-    } catch (error) {
-      console.error('API error:', error)
-    }
-  }
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Önce giriş durumunu kontrol et
-        const authResponse = await fetch('/api/auth/me', { credentials: 'include' })
-        const authData = await authResponse.json()
-        
-        if (!authData.success || !authData.data) {
-          console.log("Oturum bulunamadı, refresh token deneniyor...")
-          // Refresh token ile deneyelim
-          const refreshResponse = await fetch('/api/auth/refresh', { 
-            method: 'POST', 
-            credentials: 'include'
-          })
-          
-          if (!refreshResponse.ok) {
-            console.log("Refresh başarısız, login sayfasına yönlendiriliyor...")
-            // Giriş yapmamışsa login sayfasına yönlendir
-            window.location.href = '/auth/login'
-            return
-          }
-          
-          // Refresh başarılı ise tekrar auth kontrolü yapalım
-          const newAuthResponse = await fetch('/api/auth/me', { credentials: 'include' })
-          const newAuthData = await newAuthResponse.json()
-          
-          if (!newAuthData.success || !newAuthData.data) {
-            console.log("Refresh sonrası auth kontrolü başarısız, login sayfasına yönlendiriliyor...")
-            window.location.href = '/auth/login'
-            return
-          }
-        }
-        
-        // Profil verilerini yükle
-        await fetchProfileData()
-        
-        // Mevcut dilleri yükle
-        const langResponse = await fetch('/api/languages')
-        if (langResponse.ok) {
-          const langData = await langResponse.json()
-          setAvailableLanguages(langData.data || [])
-        }
-      } catch (error) {
-        console.error('API error:', error)
-        // Hata durumunda da login sayfasına yönlendir (manuel yönlendirme)
-        window.location.href = '/auth/login'
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    fetchData()
-  }, [router])
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Profil yükleniyor...</p>
         </div>
       </div>
     )
+  }
+
+  if (!user) {
+    return null
   }
   
   const containerVariants = {
@@ -345,13 +285,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white shadow-sm border-b border-gray-200"
+        className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 sticky top-0 z-50"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -363,23 +303,23 @@ export default function ProfilePage() {
                 </Link>
               </Button>
               <Separator orientation="vertical" className="h-6" />
-              <h1 className="text-xl font-semibold text-gray-900">Profil</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Profilim</h1>
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Ayarlar
-              </Button>
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4 mr-2" />
-                Bildirimler
-              </Button>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/matching">
                   <Search className="h-4 w-4 mr-2" />
                   Eşleşme Bul
                 </Link>
+              </Button>
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4 mr-2" />
+                Bildirimler
+              </Button>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Ayarlar
               </Button>
             </div>
           </div>
@@ -393,88 +333,53 @@ export default function ProfilePage() {
           animate="visible"
           className="space-y-8"
         >
-          {/* Profile Header */}
+          {/* Profile Header - Modern Design */}
           <motion.div variants={itemVariants}>
-            <Card className="overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-6 py-8">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-6">
-                    <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                      <div className="h-full w-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                        {user.name?.[0]}{user.surname?.[0]}
-                      </div>
-                    </Avatar>
-                    <div className="text-white">
-                      <h2 className="text-3xl font-bold">{user.name} {user.surname}</h2>
-                      <p className="text-blue-100 text-lg">{user.email}</p>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                          <GraduationCap className="h-3 w-3 mr-1" />
-                          {user.department}
-                        </Badge>
-                        <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {user.class_year}. Sınıf
-                        </Badge>
-                      </div>
-                    </div>
+            <Card className="overflow-hidden border-0 shadow-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700">
+              <div className="p-8">
+                <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
+                  {/* Avatar Section */}
+                  <div className="relative">
+                    {/* Avatar Yükleme Bileşeni */}
+                    <AvatarUpload 
+                      currentAvatarUrl={user.avatar_url || undefined}
+                      onUpload={handleAvatarUpdate}
+                      className="relative z-10"
+                    />
                   </div>
                   
-                  <div className="text-right text-white">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                      <span className="text-2xl font-bold">{user.stats.rating}</span>
-                    </div>
-                    <p className="text-blue-100">Ortalama Puan</p>
-                  </div>
+                  {/* User Info */}
+                  <div className="flex-1 text-center lg:text-left text-white">
+                    <div className="mb-6">
+                      <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                        {user.name} {user.surname}
+                      </h1>
+                      <p className="text-blue-100 text-xl mb-4">{user.email}</p>
+                      
+                      <div className="flex flex-wrap justify-center lg:justify-start gap-3 mb-6">
+                        {user.department && (
+                          <Badge variant="secondary" className="bg-white/20 text-white border-white/30 px-4 py-2 text-sm">
+                            <GraduationCap className="h-4 w-4 mr-2" />
+                            {user.department}
+                          </Badge>
+                        )}
+                        {user.class_year && (
+                          <Badge variant="secondary" className="bg-white/20 text-white border-white/30 px-4 py-2 text-sm">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            {user.class_year}. Sınıf
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-100 border-yellow-400/30 px-4 py-2 text-sm">
+                          <Coins className="h-4 w-4 mr-2" />
+                          {user.credits} Kredi
+                        </Badge>
                 </div>
               </div>
               
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{user.stats.total_sessions}</div>
-                    <div className="text-sm text-gray-600">Toplam Görüşme</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{user.stats.languages_learned}</div>
-                    <div className="text-sm text-gray-600">Öğrenilen Dil</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{user.stats.languages_taught}</div>
-                    <div className="text-sm text-gray-600">Öğretilen Dil</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{user.stats.active_days}</div>
-                    <div className="text-sm text-gray-600">Gün Aktif</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Tabs */}
-          <motion.div variants={itemVariants}>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="overview">Genel Bakış</TabsTrigger>
-                <TabsTrigger value="activity">Aktivite</TabsTrigger>
-                <TabsTrigger value="settings">Ayarlar</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* About */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center space-x-2">
-                          <User className="h-5 w-5" />
-                          <span>Hakkında</span>
-                        </CardTitle>
+                    {/* Action Button */}
                         <Button 
-                          variant="ghost" 
-                          size="sm" 
+                      variant="secondary" 
+                      size="lg"
                           onClick={() => {
                             if (isEditing) {
                               setIsEditing(false)
@@ -488,63 +393,159 @@ export default function ProfilePage() {
                               })
                             }
                           }}
-                        >
-                          {isEditing ? <X className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                    >
                       {isEditing ? (
-                        <form onSubmit={handleProfileUpdate} className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <label htmlFor="name" className="text-sm font-medium text-gray-700">Ad</label>
-                              <input 
-                                type="text"
-                                id="name"
+                        <>
+                          <X className="h-4 w-4 mr-2" />
+                          İptal Et
+                        </>
+                      ) : (
+                        <>
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Profili Düzenle
+                        </>
+                      )}
+                        </Button>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="text-center text-white">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                      <div className="text-5xl font-bold mb-2">{user.stats.rating}</div>
+                      <p className="text-blue-100 text-lg">Ortalama Puan</p>
+                      <div className="flex justify-center mt-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star}
+                            className={`h-4 w-4 ${star <= user.stats.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Main Content with Tabs */}
+          <motion.div variants={itemVariants}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="flex justify-center mb-8">
+                <TabsList className="grid grid-cols-4 w-full max-w-2xl bg-white/80 backdrop-blur-md border border-gray-200/50 shadow-lg">
+                  <TabsTrigger value="overview" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>Genel Bakış</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="languages" className="flex items-center space-x-2">
+                    <Languages className="h-4 w-4" />
+                    <span>Diller</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="availability" className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Müsaitlik</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="activity" className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Aktivite</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Stats Cards */}
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100">
+                        <CardContent className="p-6 text-center">
+                          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <MessageCircle className="h-8 w-8 text-white" />
+                          </div>
+                          <div className="text-3xl font-bold text-gray-900 mb-2">{user.stats.total_sessions}</div>
+                          <div className="text-gray-600">Toplam Görüşme</div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100">
+                        <CardContent className="p-6 text-center">
+                          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <BookOpen className="h-8 w-8 text-white" />
+                          </div>
+                          <div className="text-3xl font-bold text-gray-900 mb-2">{user.stats.languages_learned}</div>
+                          <div className="text-gray-600">Öğrenilen Dil</div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-50 to-purple-100">
+                        <CardContent className="p-6 text-center">
+                          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Users className="h-8 w-8 text-white" />
+                          </div>
+                          <div className="text-3xl font-bold text-gray-900 mb-2">{user.stats.languages_taught}</div>
+                          <div className="text-gray-600">Öğretilen Dil</div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Profile Info Section */}
+                    <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-md">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center space-x-2 text-xl">
+                          <User className="h-6 w-6 text-blue-600" />
+                          <span>Profil Bilgileri</span>
+                        </CardTitle>
+                    </CardHeader>
+                      <CardContent>
+                      {isEditing ? (
+                          <form onSubmit={handleProfileUpdate} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Ad</label>
+                                <Input
                                 name="name"
                                 value={editForm.name}
                                 onChange={handleFormChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Adınız"
                               />
                             </div>
-                            <div className="space-y-2">
-                              <label htmlFor="surname" className="text-sm font-medium text-gray-700">Soyad</label>
-                              <input 
-                                type="text"
-                                id="surname"
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Soyad</label>
+                                <Input
                                 name="surname"
                                 value={editForm.surname}
                                 onChange={handleFormChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Soyadınız"
                               />
                             </div>
                           </div>
-                          <div className="space-y-2">
-                            <label htmlFor="department" className="text-sm font-medium text-gray-700">Bölüm</label>
-                            <input 
-                              type="text"
-                              id="department"
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Bölüm</label>
+                              <Input
                               name="department"
                               value={editForm.department}
                               onChange={handleFormChange}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Bölümünüz"
                             />
                           </div>
-                          <div className="space-y-2">
-                            <label htmlFor="class_year" className="text-sm font-medium text-gray-700">Sınıf</label>
-                            <input 
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Sınıf</label>
+                              <Input
                               type="number"
-                              id="class_year"
                               name="class_year"
                               value={editForm.class_year}
                               onChange={handleFormChange}
+                                placeholder="Sınıfınız"
                               min="1"
                               max="8"
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                           </div>
-                          <div className="flex justify-end space-x-2">
+                            
+                            <div className="flex justify-end space-x-3">
                             <Button 
                               type="button" 
                               variant="outline" 
@@ -552,166 +553,143 @@ export default function ProfilePage() {
                             >
                               İptal
                             </Button>
-                            <Button 
-                              type="submit"
-                              disabled={isUpdating}
-                            >
-                              {isUpdating ? (
-                                <>
-                                  <div className="animate-spin mr-2 h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
-                                  Güncelleniyor
-                                </>
-                              ) : (
-                                <>
+                              <Button type="submit">
                                   <Save className="h-4 w-4 mr-2" />
-                                  Profili Kaydet
-                                </>
-                              )}
+                                Kaydet
                             </Button>
                           </div>
                         </form>
                       ) : (
-                        <>
-                          <div className="flex items-center space-x-3">
-                            <Mail className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{user.email}</span>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">Ad Soyad</label>
+                                <p className="text-lg text-gray-900">{user.name} {user.surname}</p>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">E-posta</label>
+                                <p className="text-lg text-gray-900">{user.email}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">Bölüm</label>
+                                <p className="text-lg text-gray-900">{user.department || 'Belirtilmemiş'}</p>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <GraduationCap className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{user.department || 'Belirtilmemiş'}</span>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-500 mb-1">Sınıf</label>
+                                <p className="text-lg text-gray-900">
+                                  {user.class_year ? `${user.class_year}. Sınıf` : 'Belirtilmemiş'}
+                                </p>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{user.class_year ? `${user.class_year}. Sınıf` : 'Belirtilmemiş'}</span>
                           </div>
-                          <div className="mt-4">
-                            <Button 
-                              className="w-full"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <Edit3 className="h-4 w-4 mr-2" />
-                              Profili Güncelle
-                            </Button>
                           </div>
-                        </>
                       )}
                     </CardContent>
                   </Card>
+                  </div>
 
-                  {/* Müsait Günler */}
-                  <AvailableDays />
+                  {/* Sidebar */}
+                  <div className="space-y-6">
+                    {/* Quick Actions */}
+                    <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-md">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg">Hızlı İşlemler</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                          <Link href="/matching">
+                            <Search className="h-4 w-4 mr-2" />
+                            Eşleşme Bul
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start" asChild>
+                          <Link href="/sessions">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Görüşmeler
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Bell className="h-4 w-4 mr-2" />
+                          Bildirimler
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Ayarlar
+                        </Button>
+                      </CardContent>
+                    </Card>
 
-                  {/* Languages Management */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Languages className="h-5 w-5" />
-                        <span>Diller</span>
+                    {/* Credit Info */}
+                    <Card className="border-0 shadow-xl bg-gradient-to-br from-yellow-50 to-orange-50">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center space-x-2 text-lg">
+                          <Coins className="h-6 w-6 text-yellow-600" />
+                          <span>Kredi Bakiyesi</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {/* Dil Ekleme Formu */}
-                      <div className="bg-gray-50 p-4 rounded-md mb-6">
-                        <h3 className="text-sm font-medium mb-3">Yeni Dil Ekle</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs text-gray-600 mb-1 block">Dil</label>
-                            <select 
-                              value={selectedLanguage}
-                              onChange={(e) => setSelectedLanguage(e.target.value)}
-                              className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="">Dil seçin</option>
-                              {availableLanguages.map((lang: any) => (
-                                <option key={lang.code} value={lang.code}>
-                                  {lang.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-600 mb-1 block">Seviye</label>
-                            <select 
-                              value={selectedLevel}
-                              onChange={(e) => setSelectedLevel(e.target.value)}
-                              className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="A1">A1 - Başlangıç</option>
-                              <option value="A2">A2 - Temel</option>
-                              <option value="B1">B1 - Orta Alt</option>
-                              <option value="B2">B2 - Orta Üst</option>
-                              <option value="C1">C1 - İleri</option>
-                              <option value="C2">C2 - Yeterlik</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-600 mb-1 block">Durum</label>
-                            <select 
-                              value={selectedRole}
-                              onChange={(e) => setSelectedRole(e.target.value)}
-                              className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="learn">Öğrenmek İstiyorum</option>
-                              <option value="teach">Öğretebilirim</option>
-                            </select>
+                        <div className="text-center">
+                          <div className="text-4xl font-bold text-yellow-600 mb-2">{user.credits}</div>
+                          <p className="text-gray-600 mb-4">Mevcut Kredi</p>
+                          <div className="text-sm text-gray-500 space-y-1">
+                            <p>• Her görüşme 1 kredi harcar</p>
+                            <p>• Başarılı görüşmeler kredi kazandırır</p>
                           </div>
                         </div>
-                        <div className="flex justify-end mt-4">
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Languages Tab */}
+              <TabsContent value="languages" className="space-y-6">
+                <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-md">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center space-x-2 text-xl">
+                        <Languages className="h-6 w-6 text-blue-600" />
+                        <span>Diller</span>
+                      </CardTitle>
                           <Button 
-                            onClick={handleAddLanguage}
-                            disabled={!selectedLanguage || isAddingLanguage}
+                        variant="outline" 
                             size="sm"
-                          >
-                            {isAddingLanguage ? (
-                              <>
-                                <div className="animate-spin mr-2 h-3 w-3 border-2 border-white rounded-full border-t-transparent"></div>
-                                Ekleniyor
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="h-3 w-3 mr-2" />
+                        onClick={() => setShowAddLanguage(true)}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
                                 Dil Ekle
-                              </>
-                            )}
                           </Button>
                         </div>
+                  </CardHeader>
+                  <CardContent>
+                    {user.languages && user.languages.length > 0 ? (
+                      <div className="space-y-4">
+                        {user.languages.map((lang) => (
+                          <div key={lang.id} className="group flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                                <span className="text-white font-bold text-lg">
+                                  {lang.code.toUpperCase()}
+                                </span>
                       </div>
-
-                      {/* Dil Listesi */}
-                      <div className="mt-2">
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Dil Listem</h3>
-                        {user.languages && user.languages.length > 0 ? (
-                          <div className="space-y-3">
-                            {user.languages.map((lang, index) => (
-                              <div key={lang.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium text-gray-900">{lang.language}</span>
-                                    <Badge variant={lang.role === 'learn' ? 'default' : 'secondary'} className="text-xs">
+                              <div>
+                                <h3 className="font-semibold text-gray-900">{lang.language}</h3>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <Badge variant={lang.role === 'learn' ? 'default' : 'secondary'}>
                                       {lang.role === 'learn' ? 'Öğreniyor' : 'Öğretiyor'}
                                     </Badge>
+                                  <Badge variant="outline">{lang.level}</Badge>
                                   </div>
-                                  <div className="flex items-center space-x-3 mt-1">
-                                    <Badge variant="outline" className="text-xs">
-                                      {lang.level}
-                                    </Badge>
-                                    <Progress 
-                                      value={
-                                        lang.level === 'A1' ? 20 : 
-                                        lang.level === 'A2' ? 40 : 
-                                        lang.level === 'B1' ? 60 : 
-                                        lang.level === 'B2' ? 80 : 
-                                        100
-                                      } 
-                                      className="w-24 h-1" 
-                                    />
                                   </div>
                                 </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleRemoveLanguage(lang.id)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -719,36 +697,87 @@ export default function ProfilePage() {
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center py-6 bg-gray-50 rounded-lg">
-                            <Languages className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                            <p className="text-gray-500 text-sm">Henüz dil eklenmemiş</p>
-                          </div>
-                        )}
+                      <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl">
+                        <Languages className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz dil eklenmemiş</h3>
+                        <p className="text-gray-500 mb-6">Öğrenmek veya öğretmek istediğiniz dilleri ekleyin</p>
+                        <Button 
+                          onClick={() => setShowAddLanguage(true)}
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          İlk Dilini Ekle
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-
-              <TabsContent value="activity">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Aktivite Geçmişi</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">Aktivite geçmişi burada olacak...</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="settings">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Hesap Ayarları</CardTitle>
+              {/* Availability Tab */}
+              <TabsContent value="availability" className="space-y-6">
+                <AvailableDays />
+              </TabsContent>
+
+              {/* Activity Tab */}
+              <TabsContent value="activity" className="space-y-6">
+                <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-md">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-2 text-xl">
+                      <TrendingUp className="h-6 w-6 text-blue-600" />
+                      <span>Aktivite Özeti</span>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <PasswordStatus />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                            <MessageCircle className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Toplam Görüşme</h3>
+                            <p className="text-2xl font-bold text-blue-600">{user.stats.total_sessions}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                            <Star className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Ortalama Puan</h3>
+                            <p className="text-2xl font-bold text-green-600">{user.stats.rating}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                            <BookOpen className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Öğrenilen Dil</h3>
+                            <p className="text-2xl font-bold text-purple-600">{user.stats.languages_learned}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+                            <Users className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Öğretilen Dil</h3>
+                            <p className="text-2xl font-bold text-orange-600">{user.stats.languages_taught}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -756,43 +785,116 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Add Language Modal */}
+      <Modal open={showAddLanguage} onOpenChange={setShowAddLanguage}>
+        <ModalContent className="sm:max-w-[425px]">
+          <ModalHeader>
+            <ModalTitle>Yeni Dil Ekle</ModalTitle>
+            <ModalDescription>
+              Öğrenmek veya öğretmek istediğiniz dili seçin.
+            </ModalDescription>
+          </ModalHeader>
+          <form onSubmit={handleAddLanguage} className="space-y-6">
+            <div className="space-y-6 p-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Dil Seçin
+                </label>
+                <Select value={newLanguage.code} onValueChange={(value) => setNewLanguage(prev => ({ ...prev, code: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Dil seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLanguages.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+    </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Rol
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="learn"
+                      checked={newLanguage.role === 'learn'}
+                      onChange={(e) => setNewLanguage(prev => ({ ...prev, role: e.target.value as 'learn' | 'teach' }))}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">Öğreniyor</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="teach"
+                      checked={newLanguage.role === 'teach'}
+                      onChange={(e) => setNewLanguage(prev => ({ ...prev, role: e.target.value as 'learn' | 'teach' }))}
+                      className="h-4 w-4 text-secondary-600 focus:ring-secondary-500 border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">Öğretiyor</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Seviye
+                </label>
+                <Select value={newLanguage.level} onValueChange={(value) => setNewLanguage(prev => ({ ...prev, level: value as 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seviye seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A1">A1 - Başlangıç</SelectItem>
+                    <SelectItem value="A2">A2 - Temel</SelectItem>
+                    <SelectItem value="B1">B1 - Orta</SelectItem>
+                    <SelectItem value="B2">B2 - Orta Üstü</SelectItem>
+                    <SelectItem value="C1">C1 - İleri</SelectItem>
+                    <SelectItem value="C2">C2 - Uzman</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <ModalFooter>
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => setShowAddLanguage(false)}
+                disabled={isAddingLanguage}
+              >
+                İptal
+              </Button>
+              <Button 
+                type="submit"
+                disabled={!newLanguage.code || isAddingLanguage}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700"
+              >
+                {isAddingLanguage ? (
+                  <>
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                    Ekleniyor...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Dil Ekle
+                  </>
+                )}
+              </Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
     </div>
   )
 }
-
-function PasswordStatus() {
-  const [status, setStatus] = useState<'unknown' | 'set' | 'not_set'>('unknown')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const res = await fetch('/api/profile', { credentials: 'include' })
-        if (res.ok) {
-          const { user } = await res.json()
-          setStatus(user && (user.password_set || !!user.password_hash) ? 'set' : 'not_set')
-        } else {
-          setStatus('unknown')
-        }
-      } catch {
-        setStatus('unknown')
-      } finally {
-        setLoading(false)
-      }
-    }
-    run()
-  }, [])
-
-  if (loading) return <p className="text-gray-600">Durum kontrol ediliyor...</p>
-  if (status === 'set') return <p className="text-success-700">Parola tanımlı.</p>
-  return (
-    <div className="space-y-3">
-      <p className="text-accent-700">Parolanız tanımlı değil. Güvenlik için belirleyin.</p>
-      <Link href="/auth/set-password" className="inline-block">
-        <Button variant="gradient">Parola Belirle</Button>
-      </Link>
-    </div>
-  )
-}
-
-

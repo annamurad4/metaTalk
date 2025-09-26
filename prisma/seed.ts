@@ -2,6 +2,7 @@
  * Veritabanı seed dosyası - Test kullanıcıları ve verileri
  */
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -133,6 +134,10 @@ const availabilityDays = [1, 2, 3, 4, 5, 6, 7]; // Hepsi 7 gün müsait
 async function main() {
   console.log('🌱 Seed verisi yükleniyor...');
 
+  // Test kullanıcıları için varsayılan parola
+  const defaultPassword: string = process.env.SEED_DEFAULT_PASSWORD ?? 'MetaTalk123!';
+  const passwordHash: string = await bcrypt.hash(defaultPassword, 10);
+
   // 1. Dilleri oluştur
   console.log('📚 Diller oluşturuluyor...');
   for (const lang of languages) {
@@ -153,7 +158,8 @@ async function main() {
       create: {
         ...user,
         email_verified: true,
-        password_hash: 'test_hash', // Test için
+        // Test kullanıcıları için varsayılan hash'lenmiş parola
+        password_hash: passwordHash,
         password_set_at: new Date(),
       },
     });
@@ -239,6 +245,7 @@ async function main() {
   console.log('✅ Seed verisi başarıyla yüklendi!');
   console.log(`👥 ${createdUsers.length} kullanıcı oluşturuldu`);
   console.log(`📚 ${languages.length} dil eklendi`);
+  console.log('🔐 Varsayılan parola: "' + defaultPassword + '"');
   console.log('🎯 Test için hazır!');
 }
 

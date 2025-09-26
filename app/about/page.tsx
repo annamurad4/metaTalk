@@ -34,7 +34,7 @@ const founders = [
   },
   {
     name: "Elmira Muratova",
-    email: "elmira.muratova@std.medipol.edu.tr",
+    email: "muratowailmira492@gmail.com",
     instagram: "elmira_muratova4",
     linkedin: "https://www.linkedin.com/in/elmira-muratova-176863292?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app",
     role: "Kurucu",
@@ -272,6 +272,16 @@ export default function AboutPage() {
                         <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
                           <Image
                             src="/images/founders/medet_22.jpg"
+                            alt={founder.name}
+                            width={96}
+                            height={96}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ) : founder.name === "Elmira Muratova" ? (
+                        <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
+                          <Image
+                            src="/images/founders/elmira.jpg"
                             alt={founder.name}
                             width={96}
                             height={96}

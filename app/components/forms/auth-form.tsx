@@ -173,10 +173,28 @@ const AuthForm = React.forwardRef<HTMLFormElement, AuthFormProps>(
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-3 p-3 bg-accent-50 border border-accent-200 rounded-lg"
+                className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg"
               >
-                <AlertCircle className="h-5 w-5 text-accent-600 flex-shrink-0" />
-                <p className="text-sm text-accent-700">{error}</p>
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">{error}</p>
+                  {/* Kullanıcıya yardımcı ipuçları */}
+                  {error.includes('Hesap bulunamadı') && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Kullanıcı adınızı kontrol edin. Nokta ve tire kullanabilirsiniz.
+                    </p>
+                  )}
+                  {error.includes('hesap mevcut') && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Bu e-posta ile zaten kayıt olmuşsunuz. Giriş yapmayı deneyin.
+                    </p>
+                  )}
+                  {error.includes('Geçersiz veri') && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Girdiğiniz bilgileri kontrol edin.
+                    </p>
+                  )}
+                </div>
               </motion.div>
             )}
 
