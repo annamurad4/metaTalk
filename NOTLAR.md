@@ -23,5 +23,6 @@ Bu dosya, Render dağıtımı sırasında yapılan minimal ve hedefli kod deği�
 - app/components/sections/features-section.tsx: Framer Motion itemVariants içerisindeki transition kaldırıldı; Next 15 tipiyle uyumlu.
 - app/components/sections/how-it-works-section.tsx: Framer Motion itemVariants içerisindeki transition kaldırıldı.
 - app/components/ui/input.tsx: HTML input 'size' çatışmasını önlemek için InputProps, React.InputHTMLAttributes'tan 'size' alanını Omit ile çıkardı.
+- app/components/ui/otp-input.tsx: Callback ref dönüşü void olacak şekilde düzenlendi (ref tipi uyumu).
 
 Not: Tüm değişiklikler derleme/tip uyumluluğu için minimal tutuldu; işlevsellik korunmaya çalışıldı.
