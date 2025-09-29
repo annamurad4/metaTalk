@@ -48,7 +48,7 @@ const foundersData = {
         description: "Platformun hızlı ve verimli çalışması için gerekli optimizasyonları yaptı. Kullanıcı deneyimini artıran teknik çözümler geliştirdi."
       }
     ],
-    bio: "MetaTalk'ın teknolojik temellerini atan ve platformun tüm teknik altyapısını geliştiren ekip üyesi. Yazılım geliştirme konusundaki uzmanlığı ile projenin başarılı olmasında kritik rol oynadı."
+    bio: "MetaTalk'ın teknolojik temellerini atan ve platformun tüm teknik altyapısını geliştiren ekip üyesi. Yazılım konusundaki tutkusu ile projenin başarılı olmasında kritik rol oynadı."
   },
   'muhammed-medet-sonmez': {
     name: "Muhammed Medet Sönmez",
