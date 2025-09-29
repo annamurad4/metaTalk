@@ -173,26 +173,12 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
 
     const containerVariants = {
       hidden: { opacity: 0, y: 20 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-          duration: 0.6,
-          ease: [0.17, 0.67, 0.83, 0.67]
-        }
-      }
+      visible: { opacity: 1, y: 0 }
     }
 
     const itemVariants = {
       hidden: { opacity: 0, y: 10 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-          duration: 0.4,
-          ease: [0.17, 0.67, 0.83, 0.67]
-        }
-      }
+      visible: { opacity: 1, y: 0 }
     }
 
     return (
@@ -200,23 +186,24 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
         variants={containerVariants}
         initial="hidden"
         animate="visible"
+        transition={{ duration: 0.6, ease: 'easeOut' as any }}
         className={cn('w-full max-w-4xl mx-auto', className)}
       >
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center space-y-2">
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} transition={{ duration: 0.4, ease: 'easeOut' as any }}>
               <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <User className="h-10 w-10 text-white" />
               </div>
             </motion.div>
             
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} transition={{ duration: 0.4, ease: 'easeOut' as any }}>
               <CardTitle className="text-2xl font-bold text-gray-900">
                 Profil Bilgileri
               </CardTitle>
             </motion.div>
             
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} transition={{ duration: 0.4, ease: 'easeOut' as any }}>
               <CardDescription className="text-gray-600">
                 Profil bilgilerinizi güncelleyin ve dil tercihlerinizi belirleyin
               </CardDescription>
@@ -249,7 +236,7 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
 
             <form ref={ref} onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
               {/* Personal Information */}
-              <motion.div variants={itemVariants} className="space-y-4">
+              <motion.div variants={itemVariants} transition={{ duration: 0.4, ease: 'easeOut' as any }} className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <User className="h-5 w-5" />
                   Kişisel Bilgiler
@@ -347,7 +334,7 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
               </motion.div>
 
               {/* Language Preferences */}
-              <motion.div variants={itemVariants} className="space-y-6">
+              <motion.div variants={itemVariants} transition={{ duration: 0.4, ease: 'easeOut' as any }} className="space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Globe className="h-5 w-5" />
                   Dil Tercihleri
@@ -447,7 +434,7 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
               </motion.div>
 
               {/* Submit Button */}
-              <motion.div variants={itemVariants} className="flex justify-end pt-6 border-t border-gray-200">
+              <motion.div variants={itemVariants} transition={{ duration: 0.4, ease: 'easeOut' as any }} className="flex justify-end pt-6 border-t border-gray-200">
                 <Button
                   type="submit"
                   size="lg"
