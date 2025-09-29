@@ -21,5 +21,6 @@ Bu dosya, Render dağıtımı sırasında yapılan minimal ve hedefli kod deği�
 - app/components/forms/profile-form.tsx: Combobox çoklu seçim kullanımı (multiple, onValueChange) ile güncellendi, eksik importlar eklendi.
 - app/components/sections/cta-section.tsx: Framer Motion itemVariants içerisindeki transition kaldırıldı; transition prop ile yönetilecek.
 - app/components/sections/features-section.tsx: Framer Motion itemVariants içerisindeki transition kaldırıldı; Next 15 tipiyle uyumlu.
+- app/components/sections/how-it-works-section.tsx: Framer Motion itemVariants içerisindeki transition kaldırıldı.
 
 Not: Tüm değişiklikler derleme/tip uyumluluğu için minimal tutuldu; işlevsellik korunmaya çalışıldı.
