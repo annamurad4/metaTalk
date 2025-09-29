@@ -156,7 +156,7 @@ export const jitsiRoomConfigSchema = z.object({
     chat: z.boolean().default(true),
     screen_share: z.boolean().default(true),
     recording: z.boolean().default(false), // MVP'de kayıt kapalı
-  }).default({}),
+  }).default(() => ({ chat: true, screen_share: true, recording: false })),
 });
 
 export type JitsiRoomConfigInput = z.infer<typeof jitsiRoomConfigSchema>;
