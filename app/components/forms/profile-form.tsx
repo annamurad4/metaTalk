@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Select, Combobox, Avatar, Badge } from '@/components/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Combobox, Avatar, Badge } from '@/components/ui'
 import { User, Mail, GraduationCap, Calendar, Globe, Plus, X, Save } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getInitials } from '@/lib/utils'
@@ -274,33 +274,49 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Select
-                    {...register('department')}
-                    label="Bölüm"
-                    placeholder="Bölümünüzü seçin"
-                    error={errors.department?.message}
-                    disabled={loading || isSubmitting}
-                  >
-                    {DEPARTMENT_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
+                  <div>
+                    <Select
+                      value={watch('department')}
+                      onValueChange={(v) => setValue('department', v)}
+                      disabled={loading || isSubmitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Bölümünüzü seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DEPARTMENT_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.department?.message && (
+                      <p className="mt-1 text-xs text-red-600">{errors.department.message}</p>
+                    )}
+                  </div>
 
-                  <Select
-                    {...register('class')}
-                    label="Sınıf"
-                    placeholder="Sınıfınızı seçin"
-                    error={errors.class?.message}
-                    disabled={loading || isSubmitting}
-                  >
-                    {CLASS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
+                  <div>
+                    <Select
+                      value={watch('class')}
+                      onValueChange={(v) => setValue('class', v)}
+                      disabled={loading || isSubmitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sınıfınızı seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLASS_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.class?.message && (
+                      <p className="mt-1 text-xs text-red-600">{errors.class.message}</p>
+                    )}
+                  </div>
                 </div>
               </motion.div>
 
@@ -369,16 +385,20 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
                             </span>
                             <Select
                               value={languageLevels[language] || ''}
-                              onChange={(e) => handleLanguageLevelChange(language, e.target.value)}
-                              placeholder="Seviye seçin"
-                              className="flex-1"
+                              onValueChange={(v) => handleLanguageLevelChange(language, v)}
                               disabled={loading || isSubmitting}
+                              className="flex-1"
                             >
-                              {CEFR_LEVELS.map((level) => (
-                                <option key={level.value} value={level.value}>
-                                  {level.label}
-                                </option>
-                              ))}
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seviye seçin" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CEFR_LEVELS.map((level) => (
+                                  <SelectItem key={level.value} value={level.value}>
+                                    {level.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
                           </div>
                         ))}
@@ -414,16 +434,20 @@ const ProfileForm = React.forwardRef<HTMLFormElement, ProfileFormProps>(
                             </span>
                             <Select
                               value={languageLevels[language] || ''}
-                              onChange={(e) => handleLanguageLevelChange(language, e.target.value)}
-                              placeholder="Seviye seçin"
-                              className="flex-1"
+                              onValueChange={(v) => handleLanguageLevelChange(language, v)}
                               disabled={loading || isSubmitting}
+                              className="flex-1"
                             >
-                              {CEFR_LEVELS.map((level) => (
-                                <option key={level.value} value={level.value}>
-                                  {level.label}
-                                </option>
-                              ))}
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seviye seçin" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CEFR_LEVELS.map((level) => (
+                                  <SelectItem key={level.value} value={level.value}>
+                                    {level.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
                           </div>
                         ))}
