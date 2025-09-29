@@ -39,6 +39,34 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
         .catch(() => {})
     }, [])
 
+    // Mobil menü açıkken body scroll kilidi ve escape ile kapatma
+    React.useEffect(() => {
+      const originalOverflow = document.body.style.overflow
+      if (isMenuOpen) {
+        document.body.style.overflow = 'hidden'
+      } else {
+        document.body.style.overflow = originalOverflow || ''
+      }
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setIsMenuOpen(false)
+      }
+      window.addEventListener('keydown', onKeyDown)
+      return () => {
+        document.body.style.overflow = originalOverflow
+        window.removeEventListener('keydown', onKeyDown)
+      }
+    }, [isMenuOpen])
+
+    // Ekran genişleyince mobil menüyü kapat
+    React.useEffect(() => {
+      const onResize = () => {
+        if (window.innerWidth >= 768) setIsMenuOpen(false)
+      }
+      window.addEventListener('resize', onResize)
+      return () => window.removeEventListener('resize', onResize)
+    }, [])
+
     const navItems = [
       { name: 'Ana Sayfa', href: '/' },
       { name: 'Nasıl Çalışır', href: '#how-it-works' },
@@ -171,77 +199,81 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
             </motion.button>
           </div>
 
-          {/* Mobile Menu */}
-          <motion.div
-            initial={false}
-            animate={{
-              height: isMenuOpen ? 'auto' : 0,
-              opacity: isMenuOpen ? 1 : 0,
-            }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="md:hidden overflow-hidden"
-          >
-            <div className="py-6 space-y-2 border-t border-gray-200/50">
-              {navItems.map((item, index) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ 
-                    opacity: isMenuOpen ? 1 : 0, 
-                    x: isMenuOpen ? 0 : -20 
-                  }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <Link
-                    href={item.href}
-                    className="block px-6 py-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                </motion.div>
-              ))}
-              
-              <div className="px-6 pt-6 space-y-3 border-t border-gray-200/50">
-                {me ? (
-                  <>
-                    <Button variant="ghost" size="sm" fullWidth className="hover:bg-blue-50 hover:text-blue-600 transition-colors duration-300" asChild>
-                      <Link href="/profile" prefetch={true} onClick={() => setIsMenuOpen(false)}>
-                        <User className="h-4 w-4 mr-2" />
-                        Profil
-                      </Link>
-                    </Button>
-                    <form action="/api/auth/logout" method="POST" onSubmit={() => setIsMenuOpen(false)}>
-                      <Button variant="gradient" size="sm" fullWidth type="submit" className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700">
-                        Çıkış Yap
-                      </Button>
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="ghost" size="sm" fullWidth className="hover:bg-blue-50 hover:text-blue-600 transition-colors duration-300" asChild>
-                      <Link href="/auth/login" prefetch={true} onClick={() => setIsMenuOpen(false)}>
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Giriş Yap
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" fullWidth className="border-gray-200 hover:border-blue-300 hover:text-blue-600 transition-colors duration-300" asChild>
-                      <Link href="/matching" prefetch={true} onClick={() => setIsMenuOpen(false)}>
-                        <Users className="h-4 w-4 mr-2" />
-                        Eşleşme Bul
-                      </Link>
-                    </Button>
-                    <Button variant="gradient" size="sm" fullWidth className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" asChild>
-                      <Link href="/auth/register" prefetch={true} onClick={() => setIsMenuOpen(false)}>
-                        <User className="h-4 w-4 mr-2" />
-                        Kayıt Ol
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </motion.div>
+          {/* Mobile Menu: tam ekran panel + arkaplan */}
+          {isMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm md:hidden"
+                onClick={() => setIsMenuOpen(false)}
+                aria-hidden="true"
+              />
+
+              {/* Panel */}
+              <nav className="fixed inset-x-0 top-16 bottom-0 z-50 md:hidden overflow-y-auto bg-white border-t border-gray-200/70">
+                <div className="py-4">
+                  <ul className="px-4 space-y-2">
+                    {navItems.map((item, index) => (
+                      <li key={item.name}>
+                        <motion.div
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.25, delay: index * 0.05 }}
+                        >
+                          <Link
+                            href={item.href}
+                            className="block rounded-xl px-4 py-3 text-base font-semibold text-gray-800 hover:bg-blue-50 hover:text-blue-700 active:bg-blue-100"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {item.name}
+                          </Link>
+                        </motion.div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4 px-4 space-y-3 border-t border-gray-200/70 pt-4">
+                    {me ? (
+                      <>
+                        <Button variant="ghost" size="sm" fullWidth className="h-11 text-base hover:bg-blue-50 hover:text-blue-700" asChild>
+                          <Link href="/profile" prefetch={true} onClick={() => setIsMenuOpen(false)}>
+                            <User className="h-5 w-5 mr-2" />
+                            Profil
+                          </Link>
+                        </Button>
+                        <form action="/api/auth/logout" method="POST" onSubmit={() => setIsMenuOpen(false)}>
+                          <Button variant="gradient" size="sm" fullWidth type="submit" className="h-11 bg-gradient-to-r from-red-500 to-red-600">
+                            Çıkış Yap
+                          </Button>
+                        </form>
+                      </>
+                    ) : (
+                      <>
+                        <Button variant="ghost" size="sm" fullWidth className="h-11 text-base hover:bg-blue-50 hover:text-blue-700" asChild>
+                          <Link href="/auth/login" prefetch={true} onClick={() => setIsMenuOpen(false)}>
+                            <LogIn className="h-5 w-5 mr-2" />
+                            Giriş Yap
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" fullWidth className="h-11 text-base border-gray-200 hover:border-blue-300 hover:text-blue-700" asChild>
+                          <Link href="/matching" prefetch={true} onClick={() => setIsMenuOpen(false)}>
+                            <Users className="h-5 w-5 mr-2" />
+                            Eşleşme Bul
+                          </Link>
+                        </Button>
+                        <Button variant="gradient" size="sm" fullWidth className="h-11 text-base bg-gradient-to-r from-blue-600 to-indigo-600" asChild>
+                          <Link href="/auth/register" prefetch={true} onClick={() => setIsMenuOpen(false)}>
+                            <User className="h-5 w-5 mr-2" />
+                            Kayıt Ol
+                          </Link>
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </nav>
+            </>
+          )}
         </div>
       </motion.header>
     )
