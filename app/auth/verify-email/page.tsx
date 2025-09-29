@@ -24,6 +24,15 @@ export default function VerifyEmailPage() {
     setEmail(e)
     setFirstName(fn)
     setLastName(ln)
+    const rm = sp.get('rememberMe')
+    if (rm != null) {
+      setRememberMe(rm === 'true')
+    } else {
+      try {
+        const val = localStorage.getItem('rememberMe')
+        if (val != null) setRememberMe(val === 'true')
+      } catch {}
+    }
     return null
   }
   const [email, setEmail] = useState<string | null>(null)
@@ -58,18 +67,7 @@ export default function VerifyEmailPage() {
     fetchCsrfToken()
   }, [])
 
-  useEffect(() => {
-    // Login/Register sayfalarından geçerken URL'e rememberMe iletebiliriz; yoksa localStorage fallback
-    const rm = searchParams.get('rememberMe')
-    if (rm != null) {
-      setRememberMe(rm === 'true')
-    } else {
-      try {
-        const val = localStorage.getItem('rememberMe')
-        if (val != null) setRememberMe(val === 'true')
-      } catch {}
-    }
-  }, [searchParams])
+  // rememberMe, SearchParamsReader içinde okunur
 
   useEffect(() => {
     if (!email) {
