@@ -1,19 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { dailyService } from '@/lib/daily';
-import { verifyAccessToken, JWTPayload } from '@/lib/jwt';
+import { verifyAccessToken, AccessTokenPayload } from '@/lib/jwt';
 
 /**
  * POST /api/sessions/join-room
  * Mevcut bir video görüşme odasına katılım token'ı oluşturur
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     // Kullanıcı doğrulama
-    const token = request.cookies.get('access_token')?.value;
+    const token = (request as any).cookies?.get?.('access_token')?.value;
     let userId: string | null = null;
     if (token) {
-      const payload = await verifyAccessToken<JWTPayload>(token);
-      if (payload?.userId) userId = payload.userId;
+      const payload = await verifyAccessToken<AccessTokenPayload>(token);
+      if (payload?.sub) userId = payload.sub;
     }
     // Test aşaması: oturum yoksa anonim kullanıcıyla devam et
     if (!userId) {

@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { dailyService } from '@/lib/daily';
-import { verifyAccessToken, JWTPayload } from '@/lib/jwt';
+import { verifyAccessToken, AccessTokenPayload } from '@/lib/jwt';
 
 /**
  * GET /api/sessions/room-stats?roomName=...
  * Oda istatistiklerini getirir
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     // Kullanıcı doğrulama
-    const token = request.cookies.get('auth-token')?.value;
+    const token = (request as any).cookies?.get?.('auth-token')?.value;
     if (!token) {
       return NextResponse.json(
         { success: false, error: 'Oturum gerekli' },
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const payload = await verifyAccessToken<JWTPayload>(token);
-    if (!payload?.userId) {
+    const payload = await verifyAccessToken<AccessTokenPayload>(token);
+    if (!payload?.sub) {
       return NextResponse.json(
         { success: false, error: 'Geçersiz oturum' },
         { status: 401 }
