@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ROUTES } from '@/lib/routes'
 import Link from 'next/link'
@@ -15,29 +15,11 @@ const AuthForm = dynamic(() => import('@/components/forms/auth-form').then(mod =
 
 export default function VerifyEmailPage() {
   const router = useRouter()
-  // useSearchParams CSR bailout uyarısı: Suspense altında okunacak
-  const SearchParamsReader = () => {
-    const sp = useSearchParams()
-    const e = sp.get('email')
-    const fn = sp.get('firstName')
-    const ln = sp.get('lastName')
-    setEmail(e)
-    setFirstName(fn)
-    setLastName(ln)
-    const rm = sp.get('rememberMe')
-    if (rm != null) {
-      setRememberMe(rm === 'true')
-    } else {
-      try {
-        const val = localStorage.getItem('rememberMe')
-        if (val != null) setRememberMe(val === 'true')
-      } catch {}
-    }
-    return null
-  }
+  const sp = useSearchParams()
   const [email, setEmail] = useState<string | null>(null)
   const [firstName, setFirstName] = useState<string | null>(null)
   const [lastName, setLastName] = useState<string | null>(null)
+  const [initialized, setInitialized] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -67,13 +49,32 @@ export default function VerifyEmailPage() {
     fetchCsrfToken()
   }, [])
 
-  // rememberMe, SearchParamsReader içinde okunur
+  // Arama parametrelerini tek yerde oku ve işaretle
+  useEffect(() => {
+    const e = sp.get('email')
+    const fn = sp.get('firstName')
+    const ln = sp.get('lastName')
+    setEmail(e)
+    setFirstName(fn)
+    setLastName(ln)
+    const rm = sp.get('rememberMe')
+    if (rm != null) {
+      setRememberMe(rm === 'true')
+    } else {
+      try {
+        const val = localStorage.getItem('rememberMe')
+        if (val != null) setRememberMe(val === 'true')
+      } catch {}
+    }
+    setInitialized(true)
+  }, [sp])
 
   useEffect(() => {
+    if (!initialized) return
     if (!email) {
-      router.push(ROUTES.LOGIN)
+      router.replace(ROUTES.LOGIN)
     }
-  }, [email, router])
+  }, [initialized, email, router])
 
   // Resend cooldown timer
   useEffect(() => {
@@ -160,7 +161,7 @@ export default function VerifyEmailPage() {
     }
   }
 
-  if (!email) {
+  if (!initialized) {
     return null
   }
 
@@ -181,20 +182,16 @@ export default function VerifyEmailPage() {
           </Link>
         </div>
 
-        {/* Suspense altında search params okuma */}
-        <Suspense fallback={<div className="py-8 text-center text-gray-500">Yükleniyor...</div>}>
-          <SearchParamsReader />
-          <AuthForm
-            type="otp"
-            onSubmit={handleSubmit}
-            loading={isLoading}
-            error={error}
-            success={success}
-            email={email}
-            onResendCode={handleResendCode}
-            resendCooldown={resendCooldown}
-          />
-        </Suspense>
+        <AuthForm
+          type="otp"
+          onSubmit={handleSubmit}
+          loading={isLoading}
+          error={error}
+          success={success}
+          email={email || undefined}
+          onResendCode={handleResendCode}
+          resendCooldown={resendCooldown}
+        />
 
         {/* Additional Info */}
         <div className="mt-6 text-center space-y-4">
