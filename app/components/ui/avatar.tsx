@@ -35,12 +35,14 @@ export interface AvatarProps
   fallback?: string
   showOnlineStatus?: boolean
   onlineStatus?: 'online' | 'offline' | 'away' | 'busy'
+  src?: string
+  alt?: string
 }
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
   AvatarProps
->(({ className, size, shape, fallback, showOnlineStatus, onlineStatus, ...props }, ref) => {
+>(({ className, size, shape, fallback, showOnlineStatus, onlineStatus, src, alt, ...props }, ref) => {
   const [imageError, setImageError] = React.useState(false)
   
   const handleImageError = () => {
@@ -70,11 +72,13 @@ const Avatar = React.forwardRef<
       <AvatarPrimitive.Image
         className="aspect-square h-full w-full object-cover"
         onError={handleImageError}
+        src={src}
+        alt={alt}
       />
       <AvatarPrimitive.Fallback
         className={cn(
           'flex h-full w-full items-center justify-center bg-gray-100 text-sm font-medium text-gray-600',
-          !imageError && props.src && 'hidden'
+          !imageError && src && 'hidden'
         )}
       >
         {fallback || '?'}
