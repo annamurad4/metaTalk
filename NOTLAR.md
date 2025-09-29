@@ -18,5 +18,7 @@ Bu dosya, Render dağıtımı sırasında yapılan minimal ve hedefli kod deği�
 - app/components/forms/profile-form.tsx: Framer Motion transition tip hatası giderildi; transition prop’ları motion bileşenlerine taşındı.
 - app/components/forms/profile-form.tsx: Select kullanımını custom UI Select (Trigger/Value/Content/Item) ile güncelledik; RHF entegrasyonu için watch/setValue kullanıldı.
 - app/components/ui/combobox.tsx: Çoklu seçim ve onChange uyumluluğu için genişletildi (value string|string[], multiple, maxSelections).
+- app/components/forms/profile-form.tsx: Combobox çoklu seçim kullanımı (multiple, onValueChange) ile güncellendi, eksik importlar eklendi.
+- app/components/sections/cta-section.tsx: Framer Motion itemVariants içerisindeki transition kaldırıldı; transition prop ile yönetilecek.
 
 Not: Tüm değişiklikler derleme/tip uyumluluğu için minimal tutuldu; işlevsellik korunmaya çalışıldı.
