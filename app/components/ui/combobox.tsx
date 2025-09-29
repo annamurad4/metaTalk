@@ -5,12 +5,16 @@ import { ChevronDown, Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface ComboboxProps {
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string | string[]
+  onValueChange?: (value: string | string[]) => void
+  // Eski kullanım uyumluluğu
+  onChange?: (value: string | string[]) => void
   placeholder?: string
   disabled?: boolean
   className?: string
   children: React.ReactNode
+  multiple?: boolean
+  maxSelections?: number
 }
 
 export interface ComboboxItemProps {
@@ -39,12 +43,15 @@ export interface ComboboxInputProps {
 }
 
 const ComboboxContext = React.createContext<{
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string | string[]
+  onValueChange?: (value: string | string[]) => void
+  onChange?: (value: string | string[]) => void
   open: boolean
   setOpen: (open: boolean) => void
   searchValue: string
   setSearchValue: (value: string) => void
+  multiple?: boolean
+  maxSelections?: number
 }>({
   open: false,
   setOpen: () => {},
@@ -53,12 +60,12 @@ const ComboboxContext = React.createContext<{
 })
 
 const Combobox = React.forwardRef<HTMLDivElement, ComboboxProps>(
-  ({ value, onValueChange, placeholder, disabled, className, children, ...props }, ref) => {
+  ({ value, onValueChange, onChange, placeholder, disabled, className, children, multiple, maxSelections, ...props }, ref) => {
     const [open, setOpen] = React.useState(false)
     const [searchValue, setSearchValue] = React.useState('')
 
     return (
-      <ComboboxContext.Provider value={{ value, onValueChange, open, setOpen, searchValue, setSearchValue }}>
+      <ComboboxContext.Provider value={{ value, onValueChange, onChange, open, setOpen, searchValue, setSearchValue, multiple, maxSelections }}>
         <div ref={ref} className={cn('relative', className)} {...props}>
           {children}
         </div>
@@ -151,14 +158,14 @@ const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
         />
         <div
           ref={ref}
-              className={cn(
+          className={cn(
             'absolute top-full z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg',
             className
           )}
           {...props}
         >
           {children}
-                </div>
+        </div>
       </>
     )
   }
@@ -167,19 +174,42 @@ ComboboxContent.displayName = 'ComboboxContent'
 
 const ComboboxItem = React.forwardRef<HTMLDivElement, ComboboxItemProps>(
   ({ value, children, disabled, className, ...props }, ref) => {
-    const { value: selectedValue, onValueChange, setOpen, searchValue } = React.useContext(ComboboxContext)
+    const { value: selectedValue, onValueChange, onChange, setOpen, searchValue, multiple, maxSelections } = React.useContext(ComboboxContext)
 
     const handleClick = () => {
-      if (!disabled && onValueChange) {
-        onValueChange(value)
+      if (disabled) return
+
+      let next: string | string[] | undefined
+
+      if (multiple) {
+        const current = Array.isArray(selectedValue) ? selectedValue.slice() : []
+        const exists = current.includes(value)
+        if (exists) {
+          next = current.filter(v => v !== value)
+        } else {
+          if (typeof maxSelections === 'number' && current.length >= maxSelections) {
+            next = current
+          } else {
+            next = [...current, value]
+          }
+        }
+        // Çoklu seçimde menüyü açık bırak
+      } else {
+        next = value
         setOpen(false)
       }
+
+      onValueChange?.(next as any)
+      onChange?.(next as any)
     }
 
     // Filter items based on search value
-    if (searchValue && !children?.toString().toLowerCase().includes(searchValue.toLowerCase())) {
+    const { searchValue: sv } = React.useContext(ComboboxContext)
+    if (sv && !children?.toString().toLowerCase().includes(sv.toLowerCase())) {
       return null
     }
+
+    const isSelected = Array.isArray(selectedValue) ? selectedValue.includes(value) : selectedValue === value
 
     return (
       <div
@@ -187,14 +217,14 @@ const ComboboxItem = React.forwardRef<HTMLDivElement, ComboboxItemProps>(
         className={cn(
           'relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
           disabled && 'pointer-events-none opacity-50',
-          selectedValue === value && 'bg-blue-50 text-blue-900',
+          isSelected && 'bg-blue-50 text-blue-900',
           className
         )}
         onClick={handleClick}
         {...props}
       >
         {children}
-        {selectedValue === value && (
+        {isSelected && (
           <Check className="ml-auto h-4 w-4" />
         )}
       </div>
