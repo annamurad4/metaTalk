@@ -1,23 +1,20 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
-import dynamic from 'next/dynamic'
-import { useState, useEffect } from 'react'
+import NextDynamic from 'next/dynamic'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ROUTES } from '@/lib/routes'
 import Link from 'next/link'
 import { ArrowLeft, RefreshCw } from 'lucide-react'
 
 // Dinamik import ile lazy loading
-const AuthForm = dynamic(() => import('@/components/forms/auth-form').then(mod => ({ default: mod.AuthForm })), {
+const AuthForm = NextDynamic(() => import('@/components/forms/auth-form').then(mod => ({ default: mod.AuthForm })), {
   loading: () => <div className="py-8 text-center text-gray-500">Yükleniyor...</div>,
   ssr: false
 })
 
 export default function VerifyEmailPage() {
   const router = useRouter()
-  const sp = useSearchParams()
   const [email, setEmail] = useState<string | null>(null)
   const [firstName, setFirstName] = useState<string | null>(null)
   const [lastName, setLastName] = useState<string | null>(null)
@@ -51,8 +48,9 @@ export default function VerifyEmailPage() {
     fetchCsrfToken()
   }, [])
 
-  // Arama parametrelerini tek yerde oku ve işaretle
-  useEffect(() => {
+  // Suspense altında search params okur
+  const SearchParamsReader = () => {
+    const sp = useSearchParams()
     const e = sp.get('email')
     const fn = sp.get('firstName')
     const ln = sp.get('lastName')
@@ -68,8 +66,9 @@ export default function VerifyEmailPage() {
         if (val != null) setRememberMe(val === 'true')
       } catch {}
     }
-    setInitialized(true)
-  }, [sp])
+    if (!initialized) setInitialized(true)
+    return null
+  }
 
   useEffect(() => {
     if (!initialized) return
@@ -173,6 +172,9 @@ export default function VerifyEmailPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-secondary-50 opacity-50"></div>
 
       <div className="relative z-10 w-full max-w-md">
+        <Suspense fallback={<div className="py-2 text-center text-gray-500">Yükleniyor...</div>}>
+          <SearchParamsReader />
+        </Suspense>
         {/* Back Button */}
         <div className="mb-6">
           <Link
