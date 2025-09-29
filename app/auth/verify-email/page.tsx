@@ -162,10 +162,6 @@ export default function VerifyEmailPage() {
     }
   }
 
-  if (!initialized) {
-    return null
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
       {/* Arka plan daha hafif */}
@@ -186,16 +182,20 @@ export default function VerifyEmailPage() {
           </Link>
         </div>
 
-        <AuthForm
-          type="otp"
-          onSubmit={handleSubmit}
-          loading={isLoading}
-          error={error}
-          success={success}
-          email={email || undefined}
-          onResendCode={handleResendCode}
-          resendCooldown={resendCooldown}
-        />
+        {initialized && email ? (
+          <AuthForm
+            type="otp"
+            onSubmit={handleSubmit}
+            loading={isLoading}
+            error={error}
+            success={success}
+            email={email || undefined}
+            onResendCode={handleResendCode}
+            resendCooldown={resendCooldown}
+          />
+        ) : (
+          <div className="py-8 text-center text-gray-500">Yükleniyor...</div>
+        )}
 
         {/* Additional Info */}
         <div className="mt-6 text-center space-y-4">
