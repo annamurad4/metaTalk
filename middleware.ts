@@ -19,9 +19,9 @@ export function middleware(req: NextRequest) {
         const arr = new Uint8Array(16);
         crypto.getRandomValues(arr);
         const token = btoa(String.fromCharCode(...arr))
-            .replaceAll('+', '-')
-            .replaceAll('/', '_')
-            .replaceAll('=', '');
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+/g, '');
         res.cookies.set('csrf_token', token, {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',

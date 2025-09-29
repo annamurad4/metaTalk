@@ -25,5 +25,6 @@ Bu dosya, Render dağıtımı sırasında yapılan minimal ve hedefli kod deği�
 - app/components/ui/input.tsx: HTML input 'size' çatışmasını önlemek için InputProps, React.InputHTMLAttributes'tan 'size' alanını Omit ile çıkardı.
 - app/components/ui/otp-input.tsx: Callback ref dönüşü void olacak şekilde düzenlendi (ref tipi uyumu).
 - app/lib/validation.ts: Zod object default, boş nesne yerine fonksiyonla tam varsayılan döndürecek şekilde düzeltildi.
+- middleware.ts: String replaceAll kullanımı, geniş uyumluluk için regex replace ile değiştirildi.
 
 Not: Tüm değişiklikler derleme/tip uyumluluğu için minimal tutuldu; işlevsellik korunmaya çalışıldı.
