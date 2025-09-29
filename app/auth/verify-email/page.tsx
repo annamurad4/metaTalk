@@ -15,10 +15,20 @@ const AuthForm = dynamic(() => import('@/components/forms/auth-form').then(mod =
 
 export default function VerifyEmailPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const email = searchParams.get('email')
-  const firstName = searchParams.get('firstName')
-  const lastName = searchParams.get('lastName')
+  // useSearchParams CSR bailout uyarısı: Suspense altında okunacak
+  const SearchParamsReader = () => {
+    const sp = useSearchParams()
+    const e = sp.get('email')
+    const fn = sp.get('firstName')
+    const ln = sp.get('lastName')
+    setEmail(e)
+    setFirstName(fn)
+    setLastName(ln)
+    return null
+  }
+  const [email, setEmail] = useState<string | null>(null)
+  const [firstName, setFirstName] = useState<string | null>(null)
+  const [lastName, setLastName] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -173,8 +183,9 @@ export default function VerifyEmailPage() {
           </Link>
         </div>
 
-        {/* Auth Form */}
+        {/* Suspense altında search params okuma */}
         <Suspense fallback={<div className="py-8 text-center text-gray-500">Yükleniyor...</div>}>
+          <SearchParamsReader />
           <AuthForm
             type="otp"
             onSubmit={handleSubmit}
