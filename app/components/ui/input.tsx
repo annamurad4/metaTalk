@@ -78,49 +78,84 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </label>
         )}
         
-        <div className="relative">
-          {leftAddon && (
-            <div className="absolute left-0 top-0 flex h-full items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">
-              {leftAddon}
-            </div>
-          )}
-          
-          {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              {leftIcon}
-            </div>
-          )}
-          
-          <input
-            id={inputId}
-            className={cn(
-              inputVariants({ variant: currentVariant, size, fullWidth }),
-              leftAddon && 'pl-20',
-              leftIcon && 'pl-10',
-              rightAddon && 'pr-20',
-              rightIcon && 'pr-10',
-              className
+        {/* Esnek input-group: addon varsa input ile kardeş olarak render edilir */}
+        {leftAddon || rightAddon ? (
+          <div className="flex w-full">
+            {leftAddon && (
+              <div className="flex select-none items-center whitespace-nowrap rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-2 text-sm text-gray-500 sm:px-3">
+                {leftAddon}
+              </div>
             )}
-            ref={ref}
-            aria-invalid={hasError}
-            aria-describedby={
-              error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
-            }
-            {...props}
-          />
-          
-          {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              {rightIcon}
+
+            <div className="relative flex-1 min-w-0">
+              {leftIcon && (
+                <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {leftIcon}
+                </div>
+              )}
+
+              <input
+                id={inputId}
+                className={cn(
+                  inputVariants({ variant: currentVariant, size, fullWidth }),
+                  leftIcon && 'pl-10',
+                  rightIcon && 'pr-10',
+                  leftAddon && 'rounded-l-none border-l-0',
+                  rightAddon && 'rounded-r-none border-r-0',
+                  'w-full'
+                )}
+                ref={ref}
+                aria-invalid={hasError}
+                aria-describedby={
+                  error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+                }
+                {...props}
+              />
+
+              {rightIcon && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {rightIcon}
+                </div>
+              )}
             </div>
-          )}
-          
-          {rightAddon && (
-            <div className="absolute right-0 top-0 flex h-full items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">
-              {rightAddon}
-            </div>
-          )}
-        </div>
+
+            {rightAddon && (
+              <div className="flex select-none items-center whitespace-nowrap rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-2 text-sm text-gray-500 sm:px-3">
+                {rightAddon}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative">
+            {leftIcon && (
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                {leftIcon}
+              </div>
+            )}
+
+            <input
+              id={inputId}
+              className={cn(
+                inputVariants({ variant: currentVariant, size, fullWidth }),
+                leftIcon && 'pl-10',
+                rightIcon && 'pr-10',
+                className
+              )}
+              ref={ref}
+              aria-invalid={hasError}
+              aria-describedby={
+                error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+              }
+              {...props}
+            />
+
+            {rightIcon && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                {rightIcon}
+              </div>
+            )}
+          </div>
+        )}
         
         {error && (
           <p 
