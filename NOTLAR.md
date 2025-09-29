@@ -27,5 +27,6 @@ Bu dosya, Render dağıtımı sırasında yapılan minimal ve hedefli kod deği�
 - app/lib/validation.ts: Zod object default, boş nesne yerine fonksiyonla tam varsayılan döndürecek şekilde düzeltildi.
 - middleware.ts: String replaceAll kullanımı, geniş uyumluluk için regex replace ile değiştirildi.
 - app/auth/verify-email/page.tsx: useSearchParams çağrısı Suspense altında güvenli okunacak şekilde düzenlendi (CSR bailout uyarısı giderildi).
+- app/matching/results/page.tsx: useSearchParams okuması için Suspense altında küçük okuyucu eklendi (CSR bailout hatası giderildi).
 
 Not: Tüm değişiklikler derleme/tip uyumluluğu için minimal tutuldu; işlevsellik korunmaya çalışıldı.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui';
@@ -44,9 +44,15 @@ interface MatchResult {
 }
 
 export default function MatchingResultsPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const type = searchParams.get('type') as 'learn' | 'teach';
+  // Suspense içinde search params okuma
+  const [type, setType] = useState<'learn' | 'teach'>('learn');
+  const SearchParamsReader = () => {
+    const sp = useSearchParams();
+    const t = (sp.get('type') as 'learn' | 'teach') || 'learn';
+    setType(t);
+    return null;
+  }
   
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,6 +174,9 @@ export default function MatchingResultsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto px-4 py-8">
+        <Suspense fallback={null}>
+          <SearchParamsReader />
+        </Suspense>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
